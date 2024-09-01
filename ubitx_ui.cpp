@@ -603,6 +603,7 @@ void sidebandToggle(struct Button *b){
   getButton("LSB", &e);
   btnDraw(&e);
 
+  setFrequency(frequency); // USB/LSB change should have immediate effect
   saveVFOs();
 }
 
