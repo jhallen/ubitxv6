@@ -10,10 +10,7 @@ IMPORTANT: It will compile only if you place this in the Arduino's own sketch di
 
 This is released under GPL v3 license.
 
-## AB1GO's (Joe Allen's) version
-
-This version adds no new features, but fixes many UI related things
-including:
+## This sketch now includes AB1GO's fixes:
 
 - Immediate change when pressing USB / LSB buttons
 - Fix crashing bug when entering menu (due to uninitialized variable)
