@@ -4,6 +4,11 @@
 #include "ubitx.h"
 #include "nano_gui.h"
 
+#define COMMAND_TEXT_Y 53
+#define COMMAND_TEXT_X 30
+#define COMMAND_TEXT_HEIGHT 24
+#define COMMAND_TEXT_WIDTH 280
+
 /**
  * The user interface of the ubitx consists of the encoder, the push-button on top of it
  * and the 16x2 LCD display.
@@ -90,7 +95,14 @@ void formatFreq(long f, char *buff) {
   ultoa(f, b, DEC);
 
   //one mhz digit if less than 10 M, two digits if more
-  if (f < 10000000l){
+  if (f < 1000000l){
+    buff[0] = ' ';
+    buff[1] = ' ';
+    strncat(buff, b, 3);    
+    strcat(buff, ".");
+    strncat(buff, &b[3], 2);
+  }
+  else if (f < 10000000l){
     buff[0] = ' ';
     strncat(buff, b, 4);    
     strcat(buff, ".");
@@ -104,8 +116,8 @@ void formatFreq(long f, char *buff) {
 }
 
 void drawCommandbar(char *text){
-  displayFillrect(30,45,280, 32, DISPLAY_NAVY);
-  displayRawText(text, 30, 45, DISPLAY_WHITE, DISPLAY_NAVY);
+  displayFillrect(COMMAND_TEXT_X, COMMAND_TEXT_Y, COMMAND_TEXT_WIDTH, COMMAND_TEXT_HEIGHT, DISPLAY_NAVY);
+  displayRawText(text, COMMAND_TEXT_X, COMMAND_TEXT_Y, DISPLAY_WHITE, DISPLAY_NAVY);
 }
 
 /** A generic control to read variable values
@@ -144,7 +156,7 @@ int getValueByKnob(int minimum, int maximum, int step_size,  int initial, char* 
       }
       checkCAT();
     }
-   displayFillrect(30,41,280, 32, DISPLAY_NAVY);
+   displayFillrect(COMMAND_TEXT_X,COMMAND_TEXT_Y, COMMAND_TEXT_WIDTH, COMMAND_TEXT_HEIGHT, DISPLAY_NAVY);
    return knob_value;
 }
 
@@ -193,12 +205,12 @@ void displayVFO(int vfo){
       strcpy(c, "A:");
     if (vfoActive == VFO_A){
       formatFreq(frequency, c+2);
-      displayColor = DISPLAY_WHITE;
-      displayBorder = DISPLAY_BLACK;
+      displayColor = DISPLAY_WHITE; // Active VFO
+      displayBorder = DISPLAY_DARKGREY; // Not focused
     }else{
       formatFreq(vfoA, c+2);
-      displayColor = DISPLAY_GREEN;
-      displayBorder = DISPLAY_BLACK;      
+      displayColor = DISPLAY_GREEN; // Not active VFO
+      displayBorder = DISPLAY_DARKGREY; // Not focused
     }
   }
 
@@ -215,22 +227,19 @@ void displayVFO(int vfo){
       strcpy(c, "B:");
     if (vfoActive == VFO_B){
       formatFreq(frequency, c+2);
-      displayColor = DISPLAY_WHITE;
-      displayBorder = DISPLAY_WHITE;
+      displayColor = DISPLAY_WHITE; // Active VFO
+      displayBorder = DISPLAY_DARKGREY; // Not focused
     } else {
-      displayColor = DISPLAY_GREEN;
-      displayBorder = DISPLAY_BLACK;
+      displayColor = DISPLAY_GREEN; // Not active VFO
+      displayBorder = DISPLAY_DARKGREY; // Not focused
       formatFreq(vfoB, c+2);
     }
   }
 
   if (vfoDisplay[0] == 0){
     displayFillrect(b.x, b.y, b.w, b.h, DISPLAY_BLACK);
-    if (vfoActive == vfo)
-      displayRect(b.x, b.y, b.w , b.h, DISPLAY_WHITE);
-    else
-      displayRect(b.x, b.y, b.w , b.h, DISPLAY_NAVY);
-  }  
+    displayRect(b.x, b.y, b.w , b.h, displayBorder);
+  }
   x = b.x + 6;
   y = b.y + 3;
 
@@ -295,40 +304,23 @@ void displayRIT(){
   }
 }
 
-void fastTune(){
-  int encoder;
+// Fast tune is now a mode..
 
-  //if the btn is down, wait until it is up
-  while(btnDown())
-    active_delay(50);
-  active_delay(300);
-  
-  displayRawText("Fast tune", 100, 55, DISPLAY_CYAN, DISPLAY_NAVY);
-  while(1){
-    checkCAT();
+int8_t fast_tune;
 
-    //exit after debouncing the btnDown
-    if (btnDown()){
-      displayFillrect(100, 55, 120, 30, DISPLAY_NAVY);
+void enable_fast_tune()
+{
+  fast_tune = 1;
+  displayRawText("Fast tune", 100, COMMAND_TEXT_Y, DISPLAY_CYAN, DISPLAY_NAVY);
+}
 
-      //wait until the button is realsed and then return
-      while(btnDown())
-        active_delay(50);
-      active_delay(300);
-      return;
-    }
-    
-    encoder = enc_read();
-    if (encoder != 0){
- 
-      if (encoder > 0 && frequency < 30000000l)
-        frequency += 50000l;
-      else if (encoder < 0 && frequency > 600000l)
-        frequency -= 50000l;
-      setFrequency(frequency);
-      displayVFO(vfoActive);
-    }
-  }// end of the event loop
+void cancel_fast_tune()
+{
+  if (fast_tune)
+  {
+    fast_tune = 0;
+    displayFillrect(100, COMMAND_TEXT_Y, 120, COMMAND_TEXT_HEIGHT, DISPLAY_NAVY);
+  }
 }
 
 void enterFreq(){
@@ -677,6 +669,14 @@ void setCwTone(){
      
   tone(CW_TONE, sideTone);
 
+  // Initial display
+  tone(CW_TONE, sideTone);
+  itoa(sideTone, c, 10);
+  strcpy(b, "CW Tone: ");
+  strcat(b, c);
+  strcat(b, " Hz");
+  drawCommandbar(b);
+
   //disable all clock 1 and clock 2 
   while (digitalRead(PTT) == HIGH && !btnDown())
   {
@@ -710,8 +710,41 @@ void setCwTone(){
 //  updateDisplay();  
 }
 
-void doCommand(struct Button *b){
-  
+void doCommand(struct Button *b)
+{
+  // These should toggle fast tune
+  if (!strcmp(b->text, "VFOA")) {
+    if (vfoActive == VFO_A)
+    {
+      if (fast_tune)
+        cancel_fast_tune();
+      else
+        enable_fast_tune();
+    }
+    else
+    {
+      switchVFO(VFO_A);
+    }
+    return;
+  }
+  else if (!strcmp(b->text, "VFOB")) {
+    if (vfoActive == VFO_B)
+    {
+      if (fast_tune)
+        cancel_fast_tune();
+      else
+        enable_fast_tune();
+    }
+    else
+    {
+      switchVFO(VFO_B);
+    }
+    return;
+  }
+
+  // All of the rest always cancel fast_tune
+  cancel_fast_tune();
+
   if (!strcmp(b->text, "RIT"))
     ritToggle(b);
   else if (!strcmp(b->text, "LSB"))
@@ -722,18 +755,6 @@ void doCommand(struct Button *b){
     cwToggle(b);
   else if (!strcmp(b->text, "SPL"))
     splitToggle(b);
-  else if (!strcmp(b->text, "VFOA")){
-    if (vfoActive == VFO_A)
-      fastTune();
-    else
-      switchVFO(VFO_A);
-  }
-  else if (!strcmp(b->text, "VFOB")){
-    if (vfoActive == VFO_B)
-      fastTune();
-    else
-      switchVFO(VFO_B);
-  }
   else if (!strcmp(b->text, "A=B"))
     vfoReset();
   else if (!strcmp(b->text, "80"))
@@ -794,6 +815,14 @@ int btnDown(){
     return 1;
 }
 
+// Wait for button to be released
+void wait_released()
+{
+  //wait for the button to be raised up
+  while(btnDown())
+    active_delay(50);
+  active_delay(50);  //debounce
+}
 
 void drawFocus(int ibtn, int color){
   struct Button b;
@@ -803,36 +832,30 @@ void drawFocus(int ibtn, int color){
 }
 
 void doCommands(){
-  int select=0, i, prevButton, btnState;
+  int select=0, i, prevButton=0, btnState;
 
-  //wait for the button to be raised up
-  while(btnDown())
-    active_delay(50);
-  active_delay(50);  //debounce
+  // Button has been released before this is called
 
-  menuOn = 2;
+  // Initial focus
+  drawFocus(select, DISPLAY_WHITE);
 
-  while (menuOn){
+  for (;;) {
 
     //check if the knob's button was pressed
     btnState = btnDown();
-    if (btnState){
+    if (btnState) {
       struct Button b;
-      memcpy_P(&b, btn_set + select/10, sizeof(struct Button));
-    
+      memcpy_P(&b, btn_set + select, sizeof(struct Button));
+
+      wait_released(); // Button released before doCommand
+
       doCommand(&b);
 
       //unfocus the buttons
-      drawFocus(select, DISPLAY_BLUE);
-      if (vfoActive == VFO_A)
-        drawFocus(0, DISPLAY_WHITE);
-      else
-        drawFocus(1, DISPLAY_WHITE);
+      drawFocus(select, DISPLAY_DARKGREY);
+
+      wait_released(); // Button released before we return
         
-      //wait for the button to be up and debounce
-      while(btnDown())
-        active_delay(100);
-      active_delay(500);      
       return;
     }
 
@@ -844,27 +867,19 @@ void doCommands(){
     }
     
     if (i > 0){
-      if (select + i < MAX_BUTTONS * 10)
+      if (select + i < MAX_BUTTONS)
         select += i;
     }
     if (i < 0 && select + i >= 0)
       select += i;      //caught ya, i is already -ve here, so you add it
     
-    if (prevButton == select / 10)
+    if (prevButton == select)
       continue;
-      
+
      //we are on a new button
-     drawFocus(prevButton, DISPLAY_BLUE);
-     drawFocus(select/10, DISPLAY_WHITE);
-     prevButton = select/10;
+     drawFocus(prevButton, DISPLAY_DARKGREY);
+     drawFocus(select, DISPLAY_WHITE);
+     prevButton = select;
   }
-//  guiUpdate();
-
-  //debounce the button
-  while(btnDown())
-    active_delay(50);
-  active_delay(50);
-
-  checkCAT();
 }
 

@@ -4,11 +4,15 @@
 
 //Normal encoder state
 uint8_t prev_enc = 0;
-int8_t enc_count = 0;
+int16_t enc_count = 0;
+
+#define DECAY_RATE 10
+#define MAX_SLAM 40
+#define FAST_THRESH 30
+#define FAST_STEP 20
 
 //Momentum encoder state
-int16_t enc_count_periodic = 0;
-int8_t momentum[3] = {0};
+int go_fast;
 static const uint16_t CALLBACK_PERIOD_MS = 200;
 static const uint8_t MOMENTUM_MULTIPLIER = 1;
 
@@ -37,8 +41,12 @@ ISR (PCINT1_vect)
       (prev_enc == 3 && cur_enc == 1) || 
       (prev_enc == 1 && cur_enc == 0))
   {
-    enc_count -= 1;
-    enc_count_periodic -= 1;
+    if (go_fast >= FAST_THRESH)
+      enc_count -= FAST_STEP;
+    else
+      enc_count -= 1;
+    if (go_fast != MAX_SLAM)
+      ++go_fast;
   }
   //these transitions point to the enccoder being rotated clockwise
   else if ((prev_enc == 0 && cur_enc == 1) || 
@@ -46,8 +54,12 @@ ISR (PCINT1_vect)
       (prev_enc == 3 && cur_enc == 2) || 
       (prev_enc == 2 && cur_enc == 0))
   {
-    enc_count += 1;
-    enc_count_periodic += 1;
+    if (go_fast >= FAST_THRESH)
+      enc_count += FAST_STEP;
+    else
+      enc_count += 1;
+    if (go_fast != MAX_SLAM)
+      ++go_fast;
   }
   else {
     // A change to two states, we can't tell whether it was forward or backward, so we skip it.
@@ -87,37 +99,22 @@ void enc_setup(void)
 
 ISR(TIMER1_COMPA_vect)
 {
-  momentum[2] = momentum[1];
-  momentum[1] = momentum[0];
-  momentum[0] = enc_count_periodic;
-  enc_count_periodic = 0;
+  if (go_fast > DECAY_RATE)
+    go_fast -= DECAY_RATE;
+  else
+    go_fast = 0;
 }
 
-int8_t min_momentum_mag()
+// Number of ticks knob was moved since last time this was called
+// ...this way we don't miss any
+// We divide enc_count by 2 to ignore the half-ticks, when knob is between detents
+
+int8_t prev_mod_count;
+
+int enc_read(void)
 {
-  int8_t min_mag = 127;
-  for(uint8_t i = 0; i < sizeof(momentum)/sizeof(momentum[0]); ++i){
-    int8_t mag = abs(momentum[i]);
-    if(mag < min_mag){
-      min_mag = mag;
-    }
-  }
-  return min_mag;
-}
-
-int enc_read(void) {
-  if(0 != enc_count){
-    int16_t ret = enc_count;
-    int8_t s = (enc_count < 0) ? -1 : 1;
-    int8_t momentum_mag = min_momentum_mag();
-    if(momentum_mag >= 20){
-      ret += s*40;
-    }
-    else if(momentum_mag >= 5){
-      ret += s*(20 + momentum_mag)/(20 - momentum_mag);
-    }
-    enc_count = 0;
-    return ret;
-  }
-  return 0;
+  int8_t mod_count = enc_count / 2;
+  int8_t rtn = mod_count - prev_mod_count;
+  prev_mod_count = mod_count;
+  return rtn;
 }

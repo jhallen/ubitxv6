@@ -256,13 +256,13 @@ void doSetup2(){
     i = enc_read();
 
     if (i > 0){
-      if (select + i < 60)
+      if (select + i < 6)
         select += i;
-        movePuck(select/10);
+        movePuck(select);
     }
-    if (i < 0 && select - i >= 0){
+    if (i < 0 && select + i >= 0){
       select += i;      //caught ya, i is already -ve here, so you add it
-      movePuck(select/10);
+      movePuck(select);
     }
 
     if (!btnDown()){
@@ -276,15 +276,15 @@ void doSetup2(){
     }
     active_delay(300);
     
-    if (select < 10)
+    if (select < 1)
      setupFreq();
-    else if (select < 20 )
+    else if (select < 2 )
       setupBFO(); 
-    else if (select < 30 )
+    else if (select < 3 )
       setupCwDelay(); 
-    else if (select < 40)
+    else if (select < 4)
         setupKeyer();
-    else if (select < 50)
+    else if (select < 5)
         setupTouch();
     else
       break; //exit setup was chosen

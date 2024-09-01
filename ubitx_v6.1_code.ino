@@ -527,7 +527,8 @@ void checkPTT(){
 }
 
 //check if the encoder button was pressed
-void checkButton(){
+void checkButton()
+{
   int i, t1, t2, knob, new_knob;
   
   //only if the button is pressed
@@ -540,23 +541,22 @@ void checkButton(){
   //disengage any CAT work
   doingCAT = 0;
 
- int downTime = 0;
- while(btnDown()){
+  int downTime = 0;
+  while(btnDown()) {
     active_delay(10);
     downTime++;
-    if (downTime > 300){
+    if (downTime > 300) {
+      // Very long press: enter setup
       doSetup2();
       return;
     }
- }
- active_delay(100);
+  }
 
- 
-  doCommands();
-  //wait for the button to go up again
-  while(btnDown())
-    active_delay(10);
-  active_delay(50);//debounce
+  active_delay(100);
+
+ // Note that button has been released
+ doCommands();
+ // doCommands waits for button release
 }
 
 void switchVFO(int vfoSelect){
@@ -596,6 +596,20 @@ void switchVFO(int vfoSelect){
     saveVFOs();
 }
 
+void modify_frequency(unsigned long new_frequency)
+{
+  if (new_frequency >= 100000l && new_frequency <= 30000000l)
+  {
+    if (frequency < 10000000l && new_frequency > 10000000l)
+      isUSB = true;
+    if (frequency > 10000000l && new_frequency < 10000000l)
+      isUSB = false;
+    frequency = new_frequency;
+    setFrequency(frequency);    
+    updateDisplay();
+  }
+}
+
 /**
  * The tuning jumps by 50 Hz on each step when you tune slowly
  * As you spin the encoder faster, the jump size also increases 
@@ -603,49 +617,19 @@ void switchVFO(int vfoSelect){
  * tuning knob
  */
 
-void doTuning(){
-  int s;
-  static unsigned long prev_freq;
-  static unsigned long nextFrequencyUpdate = 0;
+extern int8_t fast_tune;
 
-  unsigned long now = millis();
-  
-  if (now >= nextFrequencyUpdate && prev_freq != frequency){
-    updateDisplay();
-    nextFrequencyUpdate = now + 500;
-    prev_freq = frequency;
-  }
+void doTuning()
+{
+  int s = enc_read();
 
-  s = enc_read();
   if (!s)
     return;
 
   doingCAT = 0; // go back to manual mode if you were doing CAT
-  prev_freq = frequency;
 
-
-  if (s > 10)
-    frequency += 200l * s;
-  else if (s > 5)
-    frequency += 100l * s;
-  else if (s > 0)
-    frequency += 50l * s;
-  else if (s < -10)
-    frequency += 200l * s;
-  else if (s < -5)
-    frequency += 100l * s;
-  else if (s  < 0)
-    frequency += 50l * s;
-   
-  if (prev_freq < 10000000l && frequency > 10000000l)
-    isUSB = true;
-    
-  if (prev_freq > 10000000l && frequency < 10000000l)
-    isUSB = false;
-
-  setFrequency(frequency);    
+  modify_frequency(frequency + (fast_tune ? 1000l : 50l) * s);
 }
-
 
 /**
  * RIT only steps back and forth by 100 hz at a time
