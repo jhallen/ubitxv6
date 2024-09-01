@@ -20,8 +20,8 @@ including:
 - Tuning knob improvement: only register detents, not half-way points
 - Tuning knob improvement: Improve tuning speed and display update rate.  This was almost all there with the interrupt driven encoder code, but needed some final cleanup to get it to be really smooth.
 - Tuning knob improvement: Rework knob "momentum" code: now the tuning jumps at fast rate if you have been turning the knob fast for a while.
-- Fix some text alignment issues
-- Fix some focus related issues
+- Fix some text alignment issues: buttons were being erased
+- Fix some focus related issues: now selected VFO is indicated by white text, and white outline only means focus.  So now when you press tuning button you get immediate feedback.
 
 ## Arduino IDE hints
 

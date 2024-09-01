@@ -713,7 +713,7 @@ void setCwTone(){
 
 void doCommand(struct Button *b)
 {
-  // These should toggle fast tune
+  // These should toggle fast tune, or cancel it if we are switching VFOs
   if (!strcmp(b->text, "VFOA")) {
     if (vfoActive == VFO_A)
     {
@@ -724,6 +724,7 @@ void doCommand(struct Button *b)
     }
     else
     {
+      cancel_fast_tune();
       switchVFO(VFO_A);
     }
     return;
@@ -738,6 +739,7 @@ void doCommand(struct Button *b)
     }
     else
     {
+      cancel_fast_tune();
       switchVFO(VFO_B);
     }
     return;
@@ -833,7 +835,7 @@ void drawFocus(int ibtn, int color){
 }
 
 void doCommands(){
-  int select=0, i, prevButton=0, btnState;
+  int select=0, prevButton=0;
 
   // Button has been released before this is called
 
@@ -841,10 +843,8 @@ void doCommands(){
   drawFocus(select, DISPLAY_WHITE);
 
   for (;;) {
-
     //check if the knob's button was pressed
-    btnState = btnDown();
-    if (btnState) {
+    if (btnDown()) {
       struct Button b;
       memcpy_P(&b, btn_set + select, sizeof(struct Button));
 
@@ -860,7 +860,7 @@ void doCommands(){
       return;
     }
 
-    i = enc_read();
+    int i = enc_read();
     
     if (i == 0){
       active_delay(50);
