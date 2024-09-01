@@ -217,7 +217,7 @@ void setupKeyer(){
 }
 
 void drawSetupMenu(){
-  displayClear(DISPLAY_BLACK);
+  displayClear(DISPLAY_NAVY);
  
   displayText("Setup", 10, 10, 300, 35, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_WHITE); 
   displayRect(10,10,300,220, DISPLAY_WHITE);
@@ -231,53 +231,52 @@ void drawSetupMenu(){
 }
 
 static int prevPuck = -1;
+
 void movePuck(int i){
   if (prevPuck >= 0)
     displayRect(15, 49 + (prevPuck * 30), 290, 25, DISPLAY_NAVY);
   displayRect(15, 49 + (i * 30), 290, 25, DISPLAY_WHITE);
   prevPuck = i;
-  
 }
 
 void doSetup2(){
-  int select=0, i,btnState;
+  int select=0;
 
-  drawSetupMenu();
-  movePuck(select);
-
-   //wait for the button to be raised up
-  while(btnDown())
-    active_delay(50);
-  active_delay(50);  //debounce
-  
   menuOn = 2;
- 
-  while (menuOn){
-    i = enc_read();
 
-    if (i > 0){
-      if (select + i < 6)
-        select += i;
+  while (menuOn)
+  {
+    drawSetupMenu();
+    movePuck(select);
+
+    //wait for the button to be raised up
+    wait_released();
+    
+    // Move selection, wait for press
+    for (;;)
+    {
+      int i = enc_read();
+
+      if (i > 0){
+        if (select + i < 6)
+          select += i;
+          movePuck(select);
+      }
+      if (i < 0 && select + i >= 0){
+        select += i;      //caught ya, i is already -ve here, so you add it
         movePuck(select);
-    }
-    if (i < 0 && select + i >= 0){
-      select += i;      //caught ya, i is already -ve here, so you add it
-      movePuck(select);
-    }
+      }
 
-    if (!btnDown()){
+      if (btnDown())
+        break;
       active_delay(50);
-      continue;
     }
 
     //wait for the touch to lift off and debounce
-    while(btnDown()){
-      active_delay(50);
-    }
-    active_delay(300);
+    wait_released();
     
     if (select < 1)
-     setupFreq();
+     setupFreq(); // Exits back to menu
     else if (select < 2 )
       setupBFO(); 
     else if (select < 3 )
@@ -285,18 +284,12 @@ void doSetup2(){
     else if (select < 4)
         setupKeyer();
     else if (select < 5)
-        setupTouch();
+        setupTouch(); // Exits back to menu
     else
       break; //exit setup was chosen
-      //setupExit();
-    //redraw
-    drawSetupMenu();
   }
 
-  //debounce the button
-  while(btnDown())
-    active_delay(50);
-  active_delay(50);
+  wait_released();
 
   checkCAT();
   guiUpdate();

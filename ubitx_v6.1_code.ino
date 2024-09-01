@@ -796,7 +796,7 @@ void setup()
     setupBFO();
   }
   guiUpdate();
-  displayRawText("v6.1", 270, 210, DISPLAY_LIGHTGREY, DISPLAY_NAVY);
+  displayRawText("j6.1", 270, 210, DISPLAY_LIGHTGREY, DISPLAY_NAVY); // Indicate Joe's code..
 }
 
 

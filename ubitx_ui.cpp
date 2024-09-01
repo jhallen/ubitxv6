@@ -176,7 +176,7 @@ void printCarrierFreq(unsigned long freq){
 }
 
 void displayDialog(char *title, char *instructions){
-  displayClear(DISPLAY_BLACK);
+  displayClear(DISPLAY_NAVY);
   displayRect(10,10,300,220, DISPLAY_WHITE);
   displayHline(20,45,280,DISPLAY_WHITE);
   displayRect(12,12,296,216, DISPLAY_WHITE);
