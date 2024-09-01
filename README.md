@@ -7,3 +7,11 @@ IMPORTANT: It will compile only if you place this in the Arduino's own sketch di
 - As the files are now split into .cpp files, the nano gui, morse reader, etc. can be reused in other projects as well
 
 This is released under GPL v3 license.
+
+## Arduino IDE hints
+
+The "Arduino Nano" included with the uBitx v6 is a low cost clone, so:
+
+Install CH340 serial port driver.  Select the serial port that shows up when
+you plug the board in, but select "Arduino Duemilanove or Diecimila" as the
+Ardiuno type, not "Arduino Nano".
