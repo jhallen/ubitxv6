@@ -34,6 +34,8 @@
 #include "ubitx.h"
 #include "nano_gui.h"
 
+const char version_string[] = "v6.4";
+
 /**
     The main chip which generates upto three oscillators of various frequencies in the
     Raduino is the Si5351a. To learn more about Si5351a you can download the datasheet
@@ -125,7 +127,6 @@ it uses an ILI9341 display controller and an  XPT2046 touch controller.
  * the serial port as we can easily run out of buffer space. This is done in the serial_in_count variable.
  */
 char c[30], b[30];      
-char printBuff[2][20];  //mirrors what is showing on the two lines of the display
 int count = 0;          //to generally count ticks, loops, etc
 
 /** 
@@ -598,7 +599,7 @@ void switchVFO(int vfoSelect){
 
 void modify_frequency(unsigned long new_frequency)
 {
-  if (new_frequency >= 100000l && new_frequency <= 30000000l)
+  if (new_frequency >= LOWEST_FREQ && new_frequency <= HIGHEST_FREQ)
   {
     if (frequency < 10000000l && new_frequency > 10000000l)
       isUSB = true;
@@ -796,7 +797,6 @@ void setup()
     setupBFO();
   }
   guiUpdate();
-  displayRawText("v6.4", 270, 210, DISPLAY_LIGHTGREY, DISPLAY_NAVY);
 }
 
 

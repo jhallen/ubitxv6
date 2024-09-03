@@ -72,7 +72,7 @@ void setupFreq(){
     //displayRawText("Rotate to zerobeat", 20, 120, DISPLAY_CYAN, DISPLAY_NAVY);
     
     ltoa(calibration, b, 10);
-    displayText(b, 100, 140, 100, 26, DISPLAY_CYAN, DISPLAY_NAVY, DISPLAY_WHITE);
+    displayText(b, 100, 140, 100, 26, DISPLAY_CYAN, DISPLAY_NAVY, DISPLAY_WHITE, CENTERED);
   }
 
   EEPROM.put(MASTER_CAL, calibration);
@@ -131,7 +131,7 @@ void setupCwDelay(){
 
   itoa(10 * (int)cwDelayTime, b, 10);
   strcat(b, " msec");
-  displayText(b, 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK);
+  displayText(b, 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK, CENTERED);
 
   while (!btnDown()){
     knob = enc_read();
@@ -145,7 +145,7 @@ void setupCwDelay(){
 
     itoa(10 * (int)cwDelayTime, b, 10);
     strcat(b, " msec");
-    displayText(b, 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK);
+    displayText(b, 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK, CENTERED);
       
   }
 
@@ -164,11 +164,11 @@ void setupKeyer(){
   displayDialog("Set CW Keyer", "Press tune to Save"); 
  
   if (!Iambic_Key)
-    displayText("< Hand Key >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK);
+    displayText("< Hand Key >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK, CENTERED);
   else if (keyerControl & IAMBICB)
-    displayText("< Iambic A >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK);
+    displayText("< Iambic A >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK, CENTERED);
   else 
-    displayText("< Iambic B >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK);
+    displayText("< Iambic B >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK, CENTERED);
 
   if (!Iambic_Key)
     tmp_key = 0; //hand key
@@ -192,11 +192,11 @@ void setupKeyer(){
       tmp_key = 0;
 
     if (tmp_key == 0)
-      displayText("< Hand Key >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK);
+      displayText("< Hand Key >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK, CENTERED);
     else if (tmp_key == 1)
-      displayText("< Iambic A >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK);
+      displayText("< Iambic A >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK, CENTERED);
     else if (tmp_key == 2)
-      displayText("< Iambic B >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK);
+      displayText("< Iambic B >", 100, 100, 120, 26, DISPLAY_CYAN, DISPLAY_BLACK, DISPLAY_BLACK, CENTERED);
   }
 
   active_delay(500);
@@ -219,7 +219,7 @@ void setupKeyer(){
 void drawSetupMenu(){
   displayClear(DISPLAY_NAVY);
  
-  displayText("Setup", 10, 10, 300, 35, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_WHITE); 
+  displayText("Setup", 10, 10, 300, 35, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_WHITE, CENTERED); 
   displayRect(10,10,300,220, DISPLAY_WHITE);
   
   displayRawText("Set Freq...", 30, 50, DISPLAY_WHITE, DISPLAY_NAVY);       

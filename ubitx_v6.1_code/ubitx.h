@@ -3,6 +3,8 @@
  *  
  */
 
+extern const char version_string[];
+
 #define ENC_A (A0)          // Tuning encoder interface
 #define ENC_B (A1)          // Tuning encoder interface
 #define FBUTTON (A2)        // Tuning encoder interface
@@ -61,7 +63,6 @@ it uses an ILI9341 display controller and an  XPT2046 touch controller.
  * the serial port as we can easily run out of buffer space. This is done in the serial_in_count variable.
  */
 extern char c[30], b[30];      
-extern char printBuff[2][20];  //mirrors what is showing on the two lines of the display
 extern int count;          //to generally count ticks, loops, etc
 
 /** 

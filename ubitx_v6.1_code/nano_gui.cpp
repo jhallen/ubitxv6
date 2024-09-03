@@ -457,12 +457,15 @@ void displayRawText(char *text, int x1, int y1, int color, int background){
 }
 
 // The generic routine to display one line on the LCD 
-void displayText(char *text, int x1, int y1, int w, int h, int color, int background, int border) {
+void displayText(char *text, int x1, int y1, int w, int h, int color, int background, int border, int just) {
 
   displayFillrect(x1, y1, w ,h, background);
   displayRect(x1, y1, w ,h, border);
 
-  x1 += (w - displayTextExtent(text))/2;
+  if (just == CENTERED)
+    x1 += (w - displayTextExtent(text))/2;
+  else
+    x1 += 2;
   y1  += (h - TEXT_LINE_HEIGHT)/2;
   while(*text){
     char c = *text++;
@@ -487,7 +490,7 @@ void setupTouch(){
   int x1, y1, x2, y2, x3, y3, x4, y4;
   
   displayClear(DISPLAY_BLACK);
-  displayText("Click on the cross", 20,100, 200, 50, DISPLAY_WHITE, DISPLAY_BLACK, DISPLAY_BLACK);
+  displayText("Click on the cross", 20,100, 200, 50, DISPLAY_WHITE, DISPLAY_BLACK, DISPLAY_BLACK, CENTERED);
 
   // TOP-LEFT
   displayHline(10,20,20,DISPLAY_WHITE);

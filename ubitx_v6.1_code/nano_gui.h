@@ -17,7 +17,7 @@ void displayFillrect(unsigned int x,unsigned int y,unsigned int w,unsigned int h
 void displayChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg);
 int displayTextExtent(char *text);
 void displayRawText(char *text, int x1, int y1, int color, int background);
-void displayText(char *text, int x1, int y1, int w, int h, int color, int background, int border);
+void displayText(char *text, int x1, int y1, int w, int h, int color, int background, int border, int just);
 
 /* touch functions */
 boolean readTouch();
@@ -52,6 +52,9 @@ void scaleTouch(struct Point *p);
 #define BUTTON_PUSH
 #define BUTTON_CHECK
 #define BUTTON_SPINNER
+
+#define CENTERED 1
+#define LEFT 0
 
 /// Font data stored PER GLYPH
 typedef struct {

@@ -4,10 +4,29 @@
 #include "ubitx.h"
 #include "nano_gui.h"
 
-#define COMMAND_TEXT_Y 53
-#define COMMAND_TEXT_X 30
-#define COMMAND_TEXT_HEIGHT 24
-#define COMMAND_TEXT_WIDTH 280
+// Main screen layout..
+
+// Command box, between VFOs and main buttons
+#define COMMAND_TEXT_X 0
+#define COMMAND_TEXT_Y 48
+#define COMMAND_TEXT_WIDTH 280 // "TX" indicator is to the right of this box
+#define COMMAND_TEXT_HEIGHT 28
+
+#define TX_TEXT_X 280
+#define TX_TEXT_Y 48
+#define TX_TEXT_WIDTH 37
+#define TX_TEXT_HEIGHT 28
+
+// Status line, at bottom of screen
+#define STATUS_TEXT_X 0
+#define STATUS_TEXT_Y 201
+#define STATUS_TEXT_WIDTH 200 // Version string is to right of this
+#define STATUS_TEXT_HEIGHT 39
+
+#define VERSION_TEXT_X 260
+#define VERSION_TEXT_Y 201
+#define VERSION_TEXT_WIDTH 60
+#define VERSION_TEXT_HEIGHT 39
 
 /**
  * The user interface of the ubitx consists of the encoder, the push-button on top of it
@@ -116,8 +135,12 @@ void formatFreq(long f, char *buff) {
 }
 
 void drawCommandbar(char *text){
+  displayText(text, COMMAND_TEXT_X, COMMAND_TEXT_Y, COMMAND_TEXT_WIDTH, COMMAND_TEXT_HEIGHT, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY, LEFT);
+}
+
+void clearCommandbar()
+{
   displayFillrect(COMMAND_TEXT_X, COMMAND_TEXT_Y, COMMAND_TEXT_WIDTH, COMMAND_TEXT_HEIGHT, DISPLAY_NAVY);
-  displayRawText(text, COMMAND_TEXT_X, COMMAND_TEXT_Y, DISPLAY_WHITE, DISPLAY_NAVY);
 }
 
 /** A generic control to read variable values
@@ -156,7 +179,7 @@ int getValueByKnob(int minimum, int maximum, int step_size,  int initial, char* 
       }
       checkCAT();
     }
-   displayFillrect(COMMAND_TEXT_X,COMMAND_TEXT_Y, COMMAND_TEXT_WIDTH, COMMAND_TEXT_HEIGHT, DISPLAY_NAVY);
+   clearCommandbar();
    return knob_value;
 }
 
@@ -172,7 +195,7 @@ void printCarrierFreq(unsigned long freq){
   strncat(c, &b[2], 3);
   strcat(c, ".");
   strncat(c, &b[5], 1);
-  displayText(c, 110, 100, 100, 30, DISPLAY_CYAN, DISPLAY_NAVY, DISPLAY_NAVY);
+  displayText(c, 110, 100, 100, 30, DISPLAY_CYAN, DISPLAY_NAVY, DISPLAY_NAVY, CENTERED);
 }
 
 void displayDialog(char *title, char *instructions){
@@ -185,13 +208,27 @@ void displayDialog(char *title, char *instructions){
 }
 
 
+// Buffers holding current contents of VFOs on screen
+// This is used to minimize the amount of data we transfer to the screen.
 
+#define VFO_SIZE 12
 
-char vfoDisplay[12];
-void displayVFO(int vfo){
+char vfoADisplay[VFO_SIZE];
+char vfoBDisplay[VFO_SIZE];
+
+void displayVFO(int vfo, int force_redraw){
   int x, y;
   int displayColor, displayBorder;
   Button b;
+  char *display = vfoBDisplay;
+
+  if (vfo == VFO_A)
+    display = vfoADisplay;
+  else
+    display = vfoBDisplay;
+
+  if (force_redraw)
+    memset(display, 0, VFO_SIZE);
 
   if (vfo == VFO_A){
     getButton("VFOA", &b);
@@ -236,18 +273,16 @@ void displayVFO(int vfo){
     }
   }
 
-  if (vfoDisplay[0] == 0){
+  if (display[0] == 0){
     displayFillrect(b.x, b.y, b.w, b.h, DISPLAY_BLACK);
     displayRect(b.x, b.y, b.w , b.h, displayBorder);
   }
   x = b.x + 6;
   y = b.y + 3;
 
-  char *text = c;
-
-  for (int i = 0; i <= strlen(c); i++){
+  for (int i = 0; c[i]; i++){
     char digit = c[i];
-    if (digit != vfoDisplay[i]){
+    if (digit != display[i]){
       
       displayFillrect(x, y, 15, b.h-6, DISPLAY_BLACK);
       //checkCAT();
@@ -259,48 +294,45 @@ void displayVFO(int vfo){
       x += 7;
     else
       x += 16;
-    text++;
-  }//end of the while loop of the characters to be printed  
+  }
   
-  strcpy(vfoDisplay, c);
+  strcpy(display, c);
 }
 
 void btnDraw(struct Button *b){
   if (!strcmp(b->text, "VFOA")){
-    memset(vfoDisplay, 0, sizeof(vfoDisplay));
-    displayVFO(VFO_A);
+    displayVFO(VFO_A, 1);
   }
   else if(!strcmp(b->text, "VFOB")){
-    memset(vfoDisplay, 0, sizeof(vfoDisplay));    
-    displayVFO(VFO_B);
+    displayVFO(VFO_B, 1);
   }
   else if ((!strcmp(b->text, "RIT") && ritOn == 1) || 
       (!strcmp(b->text, "USB") && isUSB == 1) || 
       (!strcmp(b->text, "LSB") && isUSB == 0) || 
       (!strcmp(b->text, "SPL") && splitOn == 1))
-    displayText(b->text, b->x, b->y, b->w, b->h, DISPLAY_BLACK, DISPLAY_ORANGE, DISPLAY_DARKGREY);   
+    displayText(b->text, b->x, b->y, b->w, b->h, DISPLAY_BLACK, DISPLAY_ORANGE, DISPLAY_DARKGREY, CENTERED);
   else if (!strcmp(b->text, "CW") && cwMode == 1)
-      displayText(b->text, b->x, b->y, b->w, b->h, DISPLAY_BLACK, DISPLAY_ORANGE, DISPLAY_DARKGREY);   
+      displayText(b->text, b->x, b->y, b->w, b->h, DISPLAY_BLACK, DISPLAY_ORANGE, DISPLAY_DARKGREY, CENTERED);
   else
-    displayText(b->text, b->x, b->y, b->w, b->h, DISPLAY_GREEN, DISPLAY_BLACK, DISPLAY_DARKGREY);
+    displayText(b->text, b->x, b->y, b->w, b->h, DISPLAY_GREEN, DISPLAY_BLACK, DISPLAY_DARKGREY, CENTERED);
 }
 
 
 void displayRIT(){
-  displayFillrect(0,41,320,30, DISPLAY_NAVY);
+  displayFillrect(0,COMMAND_TEXT_Y,320,COMMAND_TEXT_HEIGHT, DISPLAY_NAVY);
   if (ritOn){
     strcpy(c, "TX:");
     formatFreq(ritTxFrequency, c+3);
     if (vfoActive == VFO_A)
-      displayText(c, 0, 45,159, 30, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY);
+      displayText(c, 0, COMMAND_TEXT_Y,159, COMMAND_TEXT_HEIGHT, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY, CENTERED);
     else
-      displayText(c, 160, 45,159, 30, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY);      
+      displayText(c, 160, COMMAND_TEXT_Y,159, COMMAND_TEXT_HEIGHT, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY, CENTERED);
   }
   else {
     if (vfoActive == VFO_A)
-      displayText("", 0, 45,159, 30, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY);
+      displayText("", 0, COMMAND_TEXT_Y,159, COMMAND_TEXT_HEIGHT, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY, CENTERED);
     else
-      displayText("", 160, 45,159, 30, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY);
+      displayText("", 160, COMMAND_TEXT_Y,159, COMMAND_TEXT_HEIGHT, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY, CENTERED);
   }
 }
 
@@ -310,8 +342,11 @@ int8_t fast_tune;
 
 void enable_fast_tune()
 {
-  fast_tune = 1;
-  displayRawText("Fast tune", 100, COMMAND_TEXT_Y, DISPLAY_CYAN, DISPLAY_NAVY);
+  if (!ritOn) // No fast tune for RIT..
+  {
+    fast_tune = 1;
+    displayText("Fast tune", 40, COMMAND_TEXT_Y, 240, COMMAND_TEXT_HEIGHT, DISPLAY_CYAN, DISPLAY_NAVY, DISPLAY_NAVY, CENTERED);
+  }
 }
 
 void cancel_fast_tune()
@@ -319,7 +354,7 @@ void cancel_fast_tune()
   if (fast_tune)
   {
     fast_tune = 0;
-    displayFillrect(100, COMMAND_TEXT_Y, 120, COMMAND_TEXT_HEIGHT, DISPLAY_NAVY);
+    clearCommandbar();
   }
 }
 
@@ -388,7 +423,7 @@ void enterFreq(){
     } // end of the button scanning loop
     strcpy(b, c);
     strcat(b, " KHz");
-    displayText(b, 0, 42, 320, 30, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY);
+    displayText(b, COMMAND_TEXT_X, COMMAND_TEXT_Y, COMMAND_TEXT_WIDTH, COMMAND_TEXT_HEIGHT, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY, CENTERED);
     delay(300);
     while(readTouch())
       checkCAT();
@@ -397,7 +432,6 @@ void enterFreq(){
 }
 
 void drawCWStatus(){
-  displayFillrect(0, 201, 320, 39, DISPLAY_NAVY);
   strcpy(b, " cw:");
   int wpm = 1200/cwSpeed;    
   itoa(wpm,c, 10);
@@ -406,18 +440,23 @@ void drawCWStatus(){
   itoa(sideTone, c, 10);
   strcat(b, c);
   strcat(b, "hz");
-  displayRawText(b, 0, 210, DISPLAY_CYAN, DISPLAY_NAVY);  
+  displayText(b, STATUS_TEXT_X, STATUS_TEXT_Y, STATUS_TEXT_WIDTH, STATUS_TEXT_HEIGHT, DISPLAY_CYAN, DISPLAY_NAVY, DISPLAY_NAVY, LEFT);
+
+  displayText(version_string, 260, 201, 60, 39, DISPLAY_LIGHTGREY, DISPLAY_NAVY, DISPLAY_NAVY, CENTERED);
+ 
 }
 
 
 void drawTx(){
   if (inTx)
-    displayText("TX", 280, 48, 37, 28, DISPLAY_BLACK, DISPLAY_ORANGE, DISPLAY_BLUE);  
+    displayText("TX", TX_TEXT_X, TX_TEXT_Y, TX_TEXT_WIDTH, TX_TEXT_HEIGHT, DISPLAY_BLACK, DISPLAY_ORANGE, DISPLAY_BLUE, CENTERED);
   else
-    displayFillrect(280, 48, 37, 28, DISPLAY_NAVY);
+    displayFillrect(TX_TEXT_X, TX_TEXT_Y, TX_TEXT_WIDTH, TX_TEXT_HEIGHT, DISPLAY_NAVY);
 }
+
 void drawStatusbar(){
   drawCWStatus();
+  displayText(version_string, VERSION_TEXT_X, VERSION_TEXT_Y, VERSION_TEXT_WIDTH, VERSION_TEXT_HEIGHT, DISPLAY_LIGHTGREY, DISPLAY_NAVY, DISPLAY_NAVY, CENTERED);
 }
 
 void guiUpdate(){
@@ -428,15 +467,6 @@ void guiUpdate(){
 */
   // use the current frequency as the VFO frequency for the active VFO
   displayClear(DISPLAY_NAVY);
-
-  memset(vfoDisplay, 0, 12);
-  displayVFO(VFO_A);
-  checkCAT();
-  memset(vfoDisplay, 0, 12);  
-  displayVFO(VFO_B);  
-
-  checkCAT();
-  displayRIT();
   checkCAT();
 
   //force the display to refresh everything
@@ -449,13 +479,15 @@ void guiUpdate(){
   }
   drawStatusbar();
   checkCAT();  
+  displayRIT();
+  checkCAT();
 }
 
 
 
 // this builds up the top line of the display with frequency and mode
 void updateDisplay() {
-   displayVFO(vfoActive);    
+   displayVFO(vfoActive, 0);
 }
 
 int enc_prev_state = 3;
@@ -549,10 +581,8 @@ void splitToggle(struct Button *b){
   btnDraw(&b2);
   
   displayRIT();
-  memset(vfoDisplay, 0, sizeof(vfoDisplay));
-  displayVFO(VFO_A);
-  memset(vfoDisplay, 0, sizeof(vfoDisplay));
-  displayVFO(VFO_B);  
+  displayVFO(VFO_A, 1);
+  displayVFO(VFO_B, 1);
 }
 
 void vfoReset(){
@@ -572,10 +602,8 @@ void vfoReset(){
     ritToggle(&b);
   }
   
-  memset(vfoDisplay, 0, sizeof(vfoDisplay));
-  displayVFO(VFO_A);
-  memset(vfoDisplay, 0, sizeof(vfoDisplay));
-  displayVFO(VFO_B);  
+  displayVFO(VFO_A, 1);
+  displayVFO(VFO_B, 1);
 
   saveVFOs();
 }
@@ -615,10 +643,8 @@ void redrawVFOs(){
     getButton("RIT", &b);
     btnDraw(&b);
     displayRIT();
-    memset(vfoDisplay, 0, sizeof(vfoDisplay));
-    displayVFO(VFO_A);
-    memset(vfoDisplay, 0, sizeof(vfoDisplay));
-    displayVFO(VFO_B);
+    displayVFO(VFO_A, 1);
+    displayVFO(VFO_B, 1);
 
     //draw the lsb/usb buttons, the sidebands might have changed
     getButton("LSB", &b);
@@ -705,7 +731,7 @@ void setCwTone(){
   //save the setting
   EEPROM.put(CW_SIDETONE, sideTone);
 
-  displayFillrect(30,41,280, 32, DISPLAY_NAVY);
+  clearCommandbar();
   drawStatusbar();
 //  printLine2("");  
 //  updateDisplay();  
