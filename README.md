@@ -13,17 +13,20 @@ This is released under GPL v3 license.
 ## This sketch now includes AB1GO's fixes:
 
 - Immediate change when pressing USB / LSB buttons
+- Correct display of frequencies below 1 MHz
 - Fix crashing bug when entering menu (due to uninitialized variable)
 - Tuning knob improvement: only register detents, not half-way points
 - Tuning knob improvement: Improve tuning speed and display update rate.  This was almost all there with the interrupt driven encoder code, but needed some final cleanup to get it to be really smooth.
 - Tuning knob improvement: Rework knob "momentum" code: now the tuning jumps at fast rate if you have been turning the knob fast for a while.
 - Fix some text alignment issues: buttons were being erased
 - Fix some focus related issues: now selected VFO is indicated by white text, and white outline only means focus.  So now when you press tuning button you get immediate feedback.
+- Put project into folder with same name as sketch so that Arduino IDE is happy
 
 ## Arduino IDE hints
 
-The "Arduino Nano" included with the uBitx v6 is a low cost clone, so:
+Install CH340 serial port driver on your operating system if COM port /
+serial port does not show up when you plug uBitx v6 into your computer.
 
-Install CH340 serial port driver.  Select the serial port that shows up when
-you plug the board in, but select "Arduino Duemilanove or Diecimila" as the
-Ardiuno type, not "Arduino Nano".
+Use "Arduino Duemilanove or Diecimila" instead of "Arduino Nano" as the
+board type if you get errors when trying to upload.  Some low cost Arduino
+Nano clones don't match real Nanos and this is a work-around.
