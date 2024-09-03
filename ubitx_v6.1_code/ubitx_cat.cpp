@@ -307,9 +307,9 @@ void processCATCommand2(byte* cmd) {
     
   case 0x07: // set mode
     if (cmd[0] == 0x00 || cmd[0] == 0x03)
-      isUSB = 0;
+      setUSB(0);
     else
-      isUSB = 1;
+      setUSB(1);
     response[0] = 0x00;
     Serial.write(response, 1);
     setFrequency(frequency);

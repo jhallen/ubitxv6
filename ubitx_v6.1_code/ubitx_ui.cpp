@@ -394,13 +394,7 @@ void enterFreq(){
           if (!strcmp(b.text, "OK")){
             long f = atol(c);
             if(30000 >= f && f > 100){
-              frequency = f * 1000l;
-              setFrequency(frequency);
-              if (vfoActive == VFO_A)
-                vfoA = frequency;
-              else
-                vfoB = frequency;
-              saveVFOs();
+              modify_frequency(f * 1000l, 1, 1);
             }
             guiUpdate();
             return;
@@ -488,6 +482,7 @@ void guiUpdate(){
 // this builds up the top line of the display with frequency and mode
 void updateDisplay() {
    displayVFO(vfoActive, 0);
+   updateUSB();
 }
 
 int enc_prev_state = 3;
@@ -619,17 +614,38 @@ void cwToggle(struct Button *b){
   btnDraw(b);
 }
 
-void sidebandToggle(struct Button *b){
-  if (!strcmp(b->text, "LSB"))
-    isUSB = 0;
-  else
-    isUSB = 1;
+char usb_needs_update;
 
-  struct Button e;
-  getButton("USB", &e);
-  btnDraw(&e);
-  getButton("LSB", &e);
-  btnDraw(&e);
+void setUSB(char wantUSB)
+{
+  if ((wantUSB && !isUSB) || (!wantUSB && isUSB))
+  {
+    isUSB = wantUSB;
+    usb_needs_update = 1;
+  }
+}
+
+void updateUSB()
+{
+  if (usb_needs_update)
+  {
+    usb_needs_update = 0;
+    struct Button e;
+    getButton("USB", &e);
+    btnDraw(&e);
+    getButton("LSB", &e);
+    btnDraw(&e);
+  }
+}
+
+void sidebandToggle(struct Button *b){
+  int wantUSB;
+  if (!strcmp(b->text, "LSB"))
+    wantUSB = 0;
+  else
+    wantUSB = 1;
+  setUSB(wantUSB);
+  updateUSB();
 
   setFrequency(frequency); // USB/LSB change should have immediate effect
   saveVFOs();
@@ -647,10 +663,7 @@ void redrawVFOs(){
     displayVFO(VFO_B, 1);
 
     //draw the lsb/usb buttons, the sidebands might have changed
-    getButton("LSB", &b);
-    btnDraw(&b);
-    getButton("USB", &b);
-    btnDraw(&b);  
+    updateUSB();
 }
 
 
@@ -668,9 +681,7 @@ void switchBand(long bandfreq){
 
 //  Serial.println(offset);
 
-  setFrequency(bandfreq + offset);
-  updateDisplay(); 
-  saveVFOs();
+  modify_frequency(bandfreq + offset, 1, 1);
 }
 
 int setCwSpeed(){

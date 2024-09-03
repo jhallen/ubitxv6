@@ -13,6 +13,7 @@ This is released under GPL v3 license.
 ## This sketch now includes AB1GO's fixes:
 
 - Immediate change when pressing USB / LSB buttons
+- Better automatic USB / LSB switching and corresponding display update
 - Correct display of frequencies below 1 MHz
 - Fix crashing bug when entering menu (due to uninitialized variable)
 - Tuning knob improvement: only register detents, not half-way points

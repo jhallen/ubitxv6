@@ -574,7 +574,7 @@ void switchVFO(int vfoSelect){
       vfoActive = VFO_A;
 //      printLine2("Selected VFO A  ");
       frequency = vfoA;
-      isUSB = isUsbVfoA;
+      setUSB(isUsbVfoA);
     }
     else {
       if (vfoActive == VFO_A){
@@ -589,7 +589,7 @@ void switchVFO(int vfoSelect){
       vfoActive = VFO_B;
 //      printLine2("Selected VFO B  ");      
       frequency = vfoB;
-      isUSB = isUsbVfoB;
+      setUSB(isUsbVfoB);
     }
 
     setFrequency(frequency);
@@ -597,17 +597,45 @@ void switchVFO(int vfoSelect){
     saveVFOs();
 }
 
-void modify_frequency(unsigned long new_frequency)
+// Manually modify frequency: make sure it's valid, change LSB/USB,
+// optionally saveVFO..
+
+// If update_vfo is set, write new freq to EEPROM
+
+// If force_usb is set, change isUSB based on new frequency
+// otherwise change isUSB only if new and prior frequencies cross 10 MHz.
+
+void modify_frequency(unsigned long new_frequency, bool update_vfo, bool force_usb)
 {
   if (new_frequency >= LOWEST_FREQ && new_frequency <= HIGHEST_FREQ)
   {
-    if (frequency < 10000000l && new_frequency > 10000000l)
-      isUSB = true;
-    if (frequency > 10000000l && new_frequency < 10000000l)
-      isUSB = false;
+    char wantUSB = isUSB;
+    if (force_usb)
+    {
+      if (new_frequency >= 10000000l)
+        wantUSB = true;
+      else
+        wantUSB = false;
+    }
+    else
+    {
+      if (frequency < 10000000l && new_frequency >= 10000000l)
+        wantUSB = true;
+      if (frequency >= 10000000l && new_frequency < 10000000l)
+        wantUSB = false;
+    }
+    setUSB(wantUSB);
     frequency = new_frequency;
     setFrequency(frequency);    
     updateDisplay();
+    if (vfoActive == VFO_A)
+      vfoA = frequency;
+    else
+      vfoB = frequency;
+    if (update_vfo)
+    {
+      saveVFOs();
+    }
   }
 }
 
@@ -629,7 +657,7 @@ void doTuning()
 
   doingCAT = 0; // go back to manual mode if you were doing CAT
 
-  modify_frequency(frequency + (fast_tune ? 1000l : 50l) * s);
+  modify_frequency(frequency + (fast_tune ? 1000l : 50l) * s, 0, 0);
 }
 
 /**
