@@ -104,7 +104,38 @@ boolean getButton(char *text, struct Button *b){
 /*
  * This formats the frequency given in f 
  */
-void formatFreq(long f, char *buff) {
+void formatFreq(long f, char *buff)
+{
+  int i;
+
+  memset(buff, 0, 10);
+
+  // We use this for offsets which could be negative
+  if (f < 0)
+  {
+    *buff++ = '-';
+    f = -f;
+  }
+
+  f /= 10; // Ignore Hz
+
+  i = 7;
+
+  while (i >= 0)
+  {
+    long g = f / 10;
+    int dig = f - g*10; // Least siginificant decimal digit
+    if (i < 5 && f == 0)
+      buff[i--] = ' ';
+    else
+      buff[i--] = dig + '0';
+    f = g;
+    if (i == 5)
+      buff[i--] = '.'; // Insert decimal point
+  }
+}
+
+#if 0
   // tks Jack Purdum W8TEE
   // replaced fsprint commmands by str commands for code size reduction
 
@@ -114,25 +145,52 @@ void formatFreq(long f, char *buff) {
   ultoa(f, b, DEC);
 
   //one mhz digit if less than 10 M, two digits if more
-  if (f < 1000000l){
+  if (f < 1000l){ // Below 1 Khz
+    buff[0] = ' ';
+    buff[1] = ' ';
+    buff[2] = ' ';
+    buff[3] = ' ';
+    buff[4] = ' ';
+    strcat(buff, ".");
+    strncat(buff, b, 2);
+  }
+  else if (f < 10000l){ // Below 10 Khz
+    buff[0] = ' ';
+    buff[1] = ' ';
+    buff[2] = ' ';
+    buff[3] = ' ';
+    strncat(buff, b, 1);    
+    strcat(buff, ".");
+    strncat(buff, &b[1], 2);
+  }
+  else if (f < 100000l){ // Below 100 Khz
+    buff[0] = ' ';
+    buff[1] = ' ';
+    buff[2] = ' ';
+    strncat(buff, b, 2);
+    strcat(buff, ".");
+    strncat(buff, &b[2], 2);
+  }
+  else if (f < 1000000l){ // Below 1 MHz
     buff[0] = ' ';
     buff[1] = ' ';
     strncat(buff, b, 3);    
     strcat(buff, ".");
     strncat(buff, &b[3], 2);
   }
-  else if (f < 10000000l){
+  else if (f < 10000000l){ // Below 10 MHz
     buff[0] = ' ';
     strncat(buff, b, 4);    
     strcat(buff, ".");
     strncat(buff, &b[4], 2);
   }
-  else {
+  else { // Above 10 MHz
     strncat(buff, b, 5);
     strcat(buff, ".");
     strncat(buff, &b[5], 2);    
   }
 }
+#endif
 
 void drawCommandbar(char *text){
   displayText(text, COMMAND_TEXT_X, COMMAND_TEXT_Y, COMMAND_TEXT_WIDTH, COMMAND_TEXT_HEIGHT, DISPLAY_WHITE, DISPLAY_NAVY, DISPLAY_NAVY, LEFT);

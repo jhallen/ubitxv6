@@ -9,7 +9,8 @@ int16_t enc_count = 0;
 #define DECAY_RATE 10
 #define MAX_SLAM 40
 #define FAST_THRESH 30
-#define FAST_STEP 20
+//#define FAST_STEP 20
+#define FAST_STEP 1
 
 //Momentum encoder state
 int go_fast;

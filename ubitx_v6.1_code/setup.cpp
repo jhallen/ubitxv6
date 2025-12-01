@@ -26,53 +26,46 @@ extern int32_t calibration;
 extern uint32_t si5351bx_vcoa;
 
 void setupFreq(){
-  int knob = 0;
-  int32_t prev_calibration;
+  long cor;
 
-  displayDialog("Set Frequency", "Push TUNE to Save"); 
+  displayDialog("Calibrate Frequency", "Push TUNE to Save"); 
 
-  //round off the the nearest khz
-  frequency = (frequency/1000l)* 1000l;
-  setFrequency(frequency);
-  
-  displayRawText("You should have a", 20, 50, DISPLAY_CYAN, DISPLAY_NAVY);
-  displayRawText("signal exactly at ", 20, 75, DISPLAY_CYAN, DISPLAY_NAVY);
-  ltoa(frequency/1000l, c, 10);
+  strcpy(c, "VFO: ");
+  formatFreq(frequency, c + strlen(c));
   strcat(c, " KHz");
-  displayRawText(c, 20, 100, DISPLAY_CYAN, DISPLAY_NAVY);
+  displayRawText(c, 20, 50, DISPLAY_CYAN, DISPLAY_NAVY);
 
-  displayRawText("Rotate to zerobeat", 20, 180, DISPLAY_CYAN, DISPLAY_NAVY);
-  //keep clear of any previous button press
-  while (btnDown())
-    active_delay(100);
-  active_delay(100);
-   
-  prev_calibration = calibration;
-  calibration = 0;
-
-//  ltoa(calibration/8750, c, 10);
-//  strcpy(b, c);
-//  strcat(b, "Hz");
-//  printLine2(b);     
-
+  // Correction in Hz = calibration * frequency / 875 MHz
+  // Or, calibration = Hz * (875 MHz / frequency)
+  strcpy(c, "Offset: ");
+  cor = ((long long)calibration * (long long)frequency) / 875000000ll;
+  // ltoa(c + strlen(c), cor);
+  formatFreq(cor, c + strlen(c));
+  strcat(c, " KHz");
+  displayRawText(c, 20, 75, DISPLAY_CYAN, DISPLAY_NAVY);
+  
   while (!btnDown())
   {
-   knob = enc_read();
+   int knob = enc_read();
    if (knob != 0)
-      calibration += knob * 875;
- /*   else if (knob < 0)
-      calibration -= 875; */
+      calibration += knob * (10 * (875000000ll / frequency)); // 10 Hz step size
     else  
       continue; //don't update the frequency or the display
- 
-    si5351bx_setfreq(0, usbCarrier);  //set back the cardrier oscillator anyway, cw tx switches it off  
+
+    strcpy(c, "Offset: ");
+    cor = ((long long)calibration * (long long)frequency) / 875000000ll;
+    // ltoa(c + strlen(c), cor);
+    formatFreq(cor, c + strlen(c));
+    strcat(c, " KHz");
+    displayFillrect(20, 75, 240, 28, DISPLAY_NAVY);
+    displayRawText(c, 20, 75, DISPLAY_CYAN, DISPLAY_NAVY);
+
     si5351_set_calibration(calibration);
     setFrequency(frequency);
 
     //displayRawText("Rotate to zerobeat", 20, 120, DISPLAY_CYAN, DISPLAY_NAVY);
-    
-    ltoa(calibration, b, 10);
-    displayText(b, 100, 140, 100, 26, DISPLAY_CYAN, DISPLAY_NAVY, DISPLAY_WHITE, CENTERED);
+    //ltoa(calibration, b, 10);
+    //displayText(b, 100, 140, 100, 26, DISPLAY_CYAN, DISPLAY_NAVY, DISPLAY_WHITE, CENTERED);
   }
 
   EEPROM.put(MASTER_CAL, calibration);
@@ -88,14 +81,11 @@ void setupFreq(){
 
 void setupBFO(){
   int knob = 0;
-  unsigned long prevCarrier;
-   
-  prevCarrier = usbCarrier;
 
-  displayDialog("Set BFO", "Press TUNE to Save"); 
+  displayDialog("IF shift", "Default BFO is 11.053"); 
   
-  usbCarrier = 11053000l;
-  si5351bx_setfreq(0, usbCarrier);
+  //usbCarrier = 11053000l;
+  //si5351bx_setfreq(0, usbCarrier);
   printCarrierFreq(usbCarrier);
 
   while (!btnDown()){

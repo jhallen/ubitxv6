@@ -228,3 +228,5 @@ void wait_released();
 
 void updateUSB();
 void setUSB(char wantUSB);
+
+void formatFreq(long f, char *buff);

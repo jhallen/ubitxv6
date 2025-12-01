@@ -22,6 +22,9 @@ This is released under GPL v3 license.
 - Fix some text alignment issues: buttons were being erased
 - Fix some focus related issues: now selected VFO is indicated by white text, and white outline only means focus.  So now when you press tuning button you get immediate feedback.
 - Put project into folder with same name as sketch so that Arduino IDE is happy
+- Improve IF Shift (BFO) menu: now it doesn't jump to the default, instead just print it
+- Improve calibration: show VFO offset instead of VCO offset, it has more meaning to user.
+- Allow calibration to work at any VFO frequency, not just 10 MHz.
 
 ## Arduino IDE hints
 
